@@ -458,19 +458,27 @@ this.canvas.addEventListener('touchend', (e) => this.onTouchEnd(e), { passive: f
   },
 
   showTapMarker(x, y) {
-    const ctx = this.ctx;
-    ctx.strokeStyle = 'rgba(92,184,232,0.9)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(x - 12, y); ctx.lineTo(x + 12, y);
-    ctx.moveTo(x, y - 12); ctx.lineTo(x, y + 12);
-    ctx.stroke();
-    ctx.strokeStyle = 'rgba(92,184,232,0.5)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(x, y, 16, 0, Math.PI * 2);
-    ctx.stroke();
-    setTimeout(() => this.render(), 1500);
+    let el = document.getElementById('tap-marker');
+    if (el) el.remove();
+    el = document.createElement('div');
+    el.id = 'tap-marker';
+    el.style.cssText = `
+      position:fixed;
+      left:${x - 20}px;
+      top:${y - 20}px;
+      width:40px;
+      height:40px;
+      pointer-events:none;
+      z-index:50;
+    `;
+    el.innerHTML = `<svg width="40" height="40" viewBox="0 0 40 40">
+      <line x1="20" y1="6" x2="20" y2="34" stroke="rgba(92,184,232,0.9)" stroke-width="1.5"/>
+      <line x1="6" y1="20" x2="34" y2="20" stroke="rgba(92,184,232,0.9)" stroke-width="1.5"/>
+      <circle cx="20" cy="20" r="10" fill="none" stroke="rgba(92,184,232,0.6)" stroke-width="1"/>
+    </svg>`;
+    document.body.appendChild(el);
+    clearTimeout(this.tapMarkerTimer);
+    this.tapMarkerTimer = setTimeout(() => el.remove(), 3000);
   },
 
   // ── TOUCH ──
