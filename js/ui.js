@@ -243,7 +243,9 @@ const QuietMoment = {
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.6s ease;
-      white-space: nowrap;
+      white-space: normal;
+      text-align: center;
+      max-width: 260px;
     `;
     el.textContent = text;
     document.body.appendChild(el);
