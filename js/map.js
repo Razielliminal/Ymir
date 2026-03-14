@@ -12,6 +12,7 @@ const MapEngine = {
   lastTouch: null,
   navigating: null,
   navPulse: 0,
+  didDrag: false,
 
   init() {
     this.canvas = document.getElementById('main-map');
@@ -22,41 +23,40 @@ const MapEngine = {
     this.resize();
     window.addEventListener('resize', () => this.resize());
 
+    // ── TOUCH ──
     this.canvas.addEventListener('touchstart', (e) => this.onTouchStart(e), { passive: false });
     this.canvas.addEventListener('touchmove', (e) => this.onTouchMove(e), { passive: false });
-    this.canvas.addEventListener('touchend', () => this.dragging = false);
-    this.canvas.addEventListener('mousedown', (e) => { this.dragging = true; this.lastTouch = { x: e.clientX, y: e.clientY }; });
+    this.canvas.addEventListener('touchend', (e) => this.onTouchEnd(e), { passive: false });
+
+    // ── MOUSE ──
+    this.canvas.addEventListener('mousedown', (e) => {
+      this.dragging = true;
+      this.didDrag = false;
+      this.lastTouch = { x: e.clientX, y: e.clientY };
+    });
     this.canvas.addEventListener('mousemove', (e) => {
       if (!this.dragging) return;
+      this.didDrag = true;
       this.offset.x += e.clientX - this.lastTouch.x;
       this.offset.y += e.clientY - this.lastTouch.y;
       this.lastTouch = { x: e.clientX, y: e.clientY };
       this.render();
     });
-    this.canvas.addEventListener('mouseup', () => this.dragging = false);
-    // Scroll to zoom (desktop)
-this.canvas.addEventListener('wheel', (e) => {
-  e.preventDefault();
-  const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-  this.scale = Math.max(0.3, Math.min(8, this.scale * zoomFactor));
-  this.render();
-  this.showZoomLevel();
-}, { passive: false });
-    this.canvas.addEventListener('click', (e) => this.onTap(e));
-this.canvas.addEventListener('touchend', (e) => {
-  if (e.changedTouches.length === 1 && !this.didDrag) {
-    e.preventDefault();
-    const touch = e.changedTouches[0];
-    const rect = this.canvas.getBoundingClientRect();
-    this.onTap({ 
-      clientX: touch.clientX, 
-      clientY: touch.clientY,
-      target: this.canvas
+    this.canvas.addEventListener('mouseup', (e) => {
+      if (!this.didDrag) this.onTap(e);
+      this.dragging = false;
     });
-  }
-  this.didDrag = false;
-}, { passive: false });
 
+    // ── SCROLL ZOOM (desktop) ──
+    this.canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const factor = e.deltaY > 0 ? 0.9 : 1.1;
+      this.scale = Math.max(0.2, Math.min(10, this.scale * factor));
+      this.render();
+      this.showZoomLevel();
+    }, { passive: false });
+
+    // ── COMPASS ──
     if (window.DeviceOrientationEvent) {
       window.addEventListener('deviceorientation', (e) => {
         if (e.alpha !== null) this.heading = (e.alpha * Math.PI) / 180;
@@ -93,7 +93,7 @@ this.canvas.addEventListener('touchend', (e) => {
     requestAnimationFrame(() => this.animLoop());
   },
 
-  // ── CHECK ARRIVAL ──
+  // ── ARRIVAL ──
   checkArrival() {
     if (!this.navigating || !App.gps) return;
     const node = this.navigating;
@@ -112,13 +112,13 @@ this.canvas.addEventListener('touchend', (e) => {
       background:rgba(12,18,24,0.98);
       border:1px solid rgba(92,184,232,0.4);
       border-radius:12px;padding:18px 16px;
-      z-index:999;animation:slideUp 0.3s ease;
+      z-index:999;
       box-shadow:0 8px 32px rgba(0,0,0,0.5);
       text-align:center;
     `;
     banner.innerHTML = `
       <div style="font-size:24px;margin-bottom:8px;">${typeIcon(node.type)}</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-style:normal;color:#e8f4ff;margin-bottom:4px;">${node.name}</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#e8f4ff;margin-bottom:4px;">${node.name}</div>
       <div style="font-family:'Space Mono',monospace;font-size:9px;color:rgba(92,184,232,0.7);letter-spacing:2px;">you have arrived</div>
     `;
     document.body.appendChild(banner);
@@ -131,45 +131,49 @@ this.canvas.addEventListener('touchend', (e) => {
     const ctx = this.ctx;
     const W = this.canvas.width;
     const H = this.canvas.height;
+
     const cx = W / 2 + this.offset.x;
     const cy = H / 2 + this.offset.y;
 
     ctx.clearRect(0, 0, W, H);
 
-    // Background grid — graph paper style ice blue
-    const gridSize = 40;
-    const gridSmall = 8;
+    // ── GRID — scales with zoom ──
+    const baseSmall = 40 * this.scale;
+    const baseLarge = 200 * this.scale;
 
-    ctx.strokeStyle = 'rgba(92,184,232,0.08)';
+    ctx.strokeStyle = 'rgba(92,184,232,0.1)';
     ctx.lineWidth = 0.5;
-    for (let x = (cx % gridSmall); x < W; x += gridSmall) {
+    for (let x = cx % baseSmall; x < W; x += baseSmall) {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
     }
-    for (let y = (cy % gridSmall); y < H; y += gridSmall) {
+    for (let y = cy % baseSmall; y < H; y += baseSmall) {
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
     }
 
-    ctx.strokeStyle = 'rgba(92,184,232,0.2)';
+    ctx.strokeStyle = 'rgba(92,184,232,0.22)';
     ctx.lineWidth = 0.5;
-    for (let x = (cx % gridSize); x < W; x += gridSize) {
+    for (let x = cx % baseLarge; x < W; x += baseLarge) {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
     }
-    for (let y = (cy % gridSize); y < H; y += gridSize) {
+    for (let y = cy % baseLarge; y < H; y += baseLarge) {
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
     }
 
-    ctx.strokeStyle = 'rgba(92,184,232,0.35)';
+    ctx.strokeStyle = 'rgba(92,184,232,0.38)';
     ctx.lineWidth = 0.5;
     ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
-    // Draw nodes
-    App.nodes.forEach(node => {
-      const nx = cx + node.x * this.scale;
-      const ny = cy + node.y * this.scale;
-      this.drawNode(ctx, node, nx, ny);
-    });
 
-    // Draw navigation line
+    // ── NODES ──
+    App.nodes
+      .filter(n => activeFilter === 'all' || n.type === activeFilter)
+      .forEach(node => {
+        const nx = cx + node.x * this.scale;
+        const ny = cy + node.y * this.scale;
+        this.drawNode(ctx, node, nx, ny);
+      });
+
+    // ── NAV LINE ──
     if (this.navigating) {
       const tn = this.navigating;
       const tx = cx + tn.x * this.scale;
@@ -185,14 +189,11 @@ this.canvas.addEventListener('touchend', (e) => {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // distance label on the line
       if (this.navigating.distanceM) {
         const midX = (cx + tx) / 2;
         const midY = (cy + ty) / 2;
         const dist = this.navigating.distanceM;
-        const label = dist > 1000
-          ? `${(dist / 1000).toFixed(1)}km`
-          : `${Math.round(dist)}m`;
+        const label = dist > 1000 ? `${(dist/1000).toFixed(1)}km` : `${Math.round(dist)}m`;
         ctx.fillStyle = 'rgba(8,12,16,0.8)';
         ctx.fillRect(midX - 22, midY - 9, 44, 16);
         ctx.fillStyle = 'rgba(92,184,232,0.8)';
@@ -212,95 +213,87 @@ this.canvas.addEventListener('touchend', (e) => {
     const expiringSoon = node.expiresAt && (node.expiresAt - Date.now()) < 5 * 60 * 1000;
     const isNavTarget = this.navigating?.id === node.id;
 
-    // Pulse ring for nav target, SOS or expiring
-    if (isNavTarget || node.type === 'sos' || expiringSoon) {
+    if (isNavTarget || node.type === 'sos') {
       const pulse = 0.5 + 0.5 * Math.sin(this.navPulse * 2);
       ctx.strokeStyle = isNavTarget ? '#5cb8e8' : color;
-      ctx.globalAlpha = pulse * (isNavTarget ? 0.6 : 0.4);
-      ctx.lineWidth = isNavTarget ? 2.5 : 2;
+      ctx.globalAlpha = pulse * 0.5;
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(x, y, 20 + pulse * (isNavTarget ? 12 : 8), 0, Math.PI * 2);
+      ctx.arc(x, y, 20 + pulse * 10, 0, Math.PI * 2);
       ctx.stroke();
       ctx.globalAlpha = 1;
     }
 
-    // Trust opacity — more confirms = more visible
     const confirms = (node.confirms || []).length;
-    const trustAlpha = Math.min(1, 0.3 + confirms * 0.15);
-
-    // Node circle
-    ctx.fillStyle = isNeed ? `rgba(255,59,59,${trustAlpha * 0.5})` : `rgba(92,184,232,${trustAlpha * 0.25})`;
-    ctx.strokeStyle = isNeed ? '#ff3b3b' : color;
+    const trustAlpha = Math.min(1, 0.35 + confirms * 0.15);
     ctx.globalAlpha = trustAlpha;
+
+    ctx.fillStyle = isNeed ? 'rgba(255,59,59,0.2)' : 'rgba(92,184,232,0.12)';
+    ctx.strokeStyle = isNeed ? '#ff3b3b' : color;
     ctx.lineWidth = isNavTarget ? 2 : 1.5;
     ctx.beginPath();
     ctx.arc(x, y, 16, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
-    // Icon
+    ctx.globalAlpha = 1;
     ctx.font = '14px serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#fff';
     ctx.fillText(typeIcon(node.type), x, y);
 
-    // Name label
     if (node.name) {
       ctx.font = '9px Space Mono, monospace';
-      ctx.fillStyle = isNavTarget ? 'rgba(92,184,232,0.9)' : 'rgba(160,210,245,0.55)';
+      ctx.fillStyle = isNavTarget ? 'rgba(92,184,232,0.9)' : 'rgba(160,210,245,0.7)';
       ctx.textAlign = 'center';
-      ctx.fillText(node.name.slice(0, 16), x, y + 24);
+      ctx.fillText(node.name.slice(0, 18), x, y + 24);
     }
 
-    ctx.globalAlpha = 1;
-
-    // Time remaining label
     if (node.expiresAt) {
       const mins = Math.round((node.expiresAt - Date.now()) / 60000);
       const timeLabel = mins > 60 ? `${Math.round(mins/60)}h` : `${mins}m`;
       ctx.font = '7px Space Mono, monospace';
-      ctx.fillStyle = expiringSoon ? 'rgba(255,59,92,0.7)' : 'rgba(160,210,245,0.3)';
+      ctx.fillStyle = expiringSoon ? 'rgba(255,59,92,0.8)' : 'rgba(160,210,245,0.35)';
       ctx.textAlign = 'center';
       ctx.fillText(timeLabel, x, y + 34);
     }
+
+    ctx.globalAlpha = 1;
   },
 
   drawSelf(ctx, x, y) {
-    const pulse = 0.5 + 0.5 * Math.sin(this.navPulse);
-
-    ctx.strokeStyle = 'rgba(92,184,232,0.15)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(x, y, 28 + pulse * 6, 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.strokeStyle = 'rgba(92,184,232,0.05)';
+    // mesh range — static
+    ctx.strokeStyle = 'rgba(92,184,232,0.06)';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(x, y, 80, 0, Math.PI * 2);
     ctx.stroke();
 
+    // clean dot — no animation
     ctx.fillStyle = '#5cb8e8';
-    ctx.shadowBlur = 14;
+    ctx.shadowBlur = 12;
     ctx.shadowColor = '#5cb8e8';
     ctx.beginPath();
-    ctx.arc(x, y, 6, 0, Math.PI * 2);
+    ctx.arc(x, y, 7, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
 
+    // direction line
     ctx.strokeStyle = '#5cb8e8';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(
-      x + Math.sin(this.heading) * 14,
-      y - Math.cos(this.heading) * 14
+      x + Math.sin(this.heading) * 18,
+      y - Math.cos(this.heading) * 18
     );
     ctx.stroke();
+    ctx.lineCap = 'butt';
   },
 
-  // ── MINIMAP (Genshin-style rotating) ──
+  // ── MINIMAP ──
   renderMinimap() {
     const ctx = this.miniCtx;
     const W = this.miniCanvas.width;
@@ -316,127 +309,129 @@ this.canvas.addEventListener('touchend', (e) => {
     ctx.arc(cx, cy, radius, 0, Math.PI * 2);
     ctx.clip();
 
-    ctx.fillStyle = 'rgba(4,8,14,0.85)';
+    ctx.fillStyle = 'rgba(4,8,14,0.9)';
     ctx.fillRect(0, 0, W, H);
 
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(-this.heading);
 
+    // true north line — red, obvious
+    ctx.strokeStyle = 'rgba(255,80,80,0.7)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, -(radius - 6));
+    ctx.stroke();
+
     const miniScale = 0.15;
     App.nodes
-  .filter(n => activeFilter === 'all' || n.type === activeFilter)
-  .forEach(node => {
-      const nx = node.x * miniScale;
-      const ny = node.y * miniScale;
-      const dist = Math.sqrt(nx * nx + ny * ny);
-      const isNavTarget = this.navigating?.id === node.id;
+      .filter(n => activeFilter === 'all' || n.type === activeFilter)
+      .forEach(node => {
+        const nx = node.x * miniScale;
+        const ny = node.y * miniScale;
+        const dist = Math.sqrt(nx * nx + ny * ny);
+        const isNavTarget = this.navigating?.id === node.id;
 
-      if (dist < radius - 8) {
-        if (isNavTarget) {
-          const pulse = 0.5 + 0.5 * Math.sin(this.navPulse * 2);
-          ctx.fillStyle = '#5cb8e8';
-          ctx.globalAlpha = 0.3 + 0.4 * pulse;
-          ctx.beginPath();
-          ctx.arc(nx, ny, 5 + pulse * 3, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.globalAlpha = 1;
-          ctx.fillStyle = '#5cb8e8';
-          ctx.beginPath();
-          ctx.arc(nx, ny, 4, 0, Math.PI * 2);
-          ctx.fill();
+        if (dist < radius - 8) {
+          if (isNavTarget) {
+            const pulse = 0.5 + 0.5 * Math.sin(this.navPulse * 2);
+            ctx.fillStyle = '#5cb8e8';
+            ctx.globalAlpha = 0.4 + 0.4 * pulse;
+            ctx.beginPath();
+            ctx.arc(nx, ny, 5 + pulse * 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+          } else {
+            ctx.fillStyle = this.nodeColor(node.type);
+            ctx.beginPath();
+            ctx.arc(nx, ny, 3, 0, Math.PI * 2);
+            ctx.fill();
+          }
         } else {
-          ctx.fillStyle = this.nodeColor(node.type);
-          ctx.beginPath();
-          ctx.arc(nx, ny, 3, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      } else {
-        const angle = Math.atan2(ny, nx);
-        const ex = Math.cos(angle) * (radius - 8);
-        const ey = Math.sin(angle) * (radius - 8);
+          const angle = Math.atan2(ny, nx);
+          const ex = Math.cos(angle) * (radius - 8);
+          const ey = Math.sin(angle) * (radius - 8);
 
-        if (isNavTarget) {
-          // pulsating arrow at minimap edge pointing to destination
-          const pulse = 0.5 + 0.5 * Math.sin(this.navPulse * 2);
-          ctx.save();
-          ctx.translate(ex, ey);
-          ctx.rotate(angle);
-          ctx.globalAlpha = 0.5 + 0.5 * pulse;
-          ctx.fillStyle = '#5cb8e8';
-          ctx.shadowBlur = 8;
-          ctx.shadowColor = '#5cb8e8';
-          ctx.beginPath();
-          ctx.moveTo(8, 0);
-          ctx.lineTo(-5, -5);
-          ctx.lineTo(-5, 5);
-          ctx.closePath();
-          ctx.fill();
-          ctx.shadowBlur = 0;
-          ctx.globalAlpha = 1;
-          ctx.restore();
-        } else {
-          ctx.font = '10px serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(typeIcon(node.type), ex, ey);
+          if (isNavTarget) {
+            const pulse = 0.5 + 0.5 * Math.sin(this.navPulse * 2);
+            ctx.save();
+            ctx.translate(ex, ey);
+            ctx.rotate(angle);
+            ctx.globalAlpha = 0.6 + 0.4 * pulse;
+            ctx.fillStyle = '#5cb8e8';
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = '#5cb8e8';
+            ctx.beginPath();
+            ctx.moveTo(8, 0);
+            ctx.lineTo(-5, -5);
+            ctx.lineTo(-5, 5);
+            ctx.closePath();
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 1;
+            ctx.restore();
+          } else {
+            ctx.font = '10px serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = this.nodeColor(node.type);
+            ctx.fillText(typeIcon(node.type), ex, ey);
+          }
         }
-      }
-    });
+      });
 
     ctx.restore();
 
-    // North indicator
-    ctx.fillStyle = 'rgba(160,210,245,0.35)';
-    ctx.font = '8px Space Mono, monospace';
+    // N label — big and red so you can't miss it
+    ctx.fillStyle = 'rgba(255,100,100,0.95)';
+    ctx.font = 'bold 11px Space Mono, monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('N', cx, 10);
+    ctx.fillText('N', cx, 14);
 
-    // Self dot
+    // self dot
     ctx.fillStyle = '#5cb8e8';
     ctx.shadowBlur = 8;
     ctx.shadowColor = '#5cb8e8';
     ctx.beginPath();
-    ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+    ctx.arc(cx, cy, 4, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Direction line
+    // direction line
     ctx.strokeStyle = '#5cb8e8';
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(cx, cy);
-    ctx.lineTo(cx, cy - 10);
+    ctx.lineTo(cx, cy - 12);
     ctx.stroke();
 
     ctx.restore();
 
-    // Circle border
-    ctx.strokeStyle = 'rgba(92,184,232,0.2)';
+    // border
+    ctx.strokeStyle = 'rgba(92,184,232,0.25)';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(cx, cy, radius, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Distance on minimap when navigating
+    // nav distance
     if (this.navigating && this.navigating.distanceM) {
       const dist = this.navigating.distanceM;
-      const label = dist > 1000
-        ? `${(dist / 1000).toFixed(1)}km`
-        : `${Math.round(dist)}m`;
-      ctx.fillStyle = 'rgba(8,12,16,0.85)';
-      ctx.fillRect(cx - 22, H - 18, 44, 14);
+      const label = dist > 1000 ? `${(dist/1000).toFixed(1)}km` : `${Math.round(dist)}m`;
+      ctx.fillStyle = 'rgba(8,12,16,0.9)';
+      ctx.fillRect(cx - 24, H - 18, 48, 14);
       ctx.fillStyle = 'rgba(92,184,232,0.9)';
       ctx.font = '8px Space Mono, monospace';
       ctx.textAlign = 'center';
       ctx.fillText(label, cx, H - 8);
     }
 
-    // Peer indicator — vague, no numbers for safety
     document.getElementById('mesh-count').textContent =
       App.meshPeers > 0 ? 'mesh active' : 'scanning...';
   },
 
+  // ── TAP ──
   onTap(e) {
     const rect = this.canvas.getBoundingClientRect();
     const tx = e.clientX - rect.left;
@@ -448,46 +443,46 @@ this.canvas.addEventListener('touchend', (e) => {
       const nx = cx + node.x * this.scale;
       const ny = cy + node.y * this.scale;
       const dist = Math.sqrt((tx - nx) ** 2 + (ty - ny) ** 2);
-      if (dist < 24) {
+      if (dist < 28) {
         showNodePopup(node);
         return;
       }
     }
 
-    // Store tapped map position for pin placement
     MapEngine.tapX = (tx - cx) / this.scale;
     MapEngine.tapY = (ty - cy) / this.scale;
 
-    // Convert to lat/lng if GPS origin exists
     if (App.gpsOrigin) {
       const scale = 100000;
       MapEngine.tapLat = App.gpsOrigin.lat - (MapEngine.tapY / scale);
       MapEngine.tapLng = App.gpsOrigin.lng + (MapEngine.tapX / scale);
     }
 
-    // Store tapped map position for pin placement
-    MapEngine.tapX = (tx - cx) / this.scale;
-    MapEngine.tapY = (ty - cy) / this.scale;
-
-    // Convert to lat/lng if GPS origin exists
-    if (App.gpsOrigin) {
-      const scale = 100000;
-      MapEngine.tapLat = App.gpsOrigin.lat - (MapEngine.tapY / scale);
-      MapEngine.tapLng = App.gpsOrigin.lng + (MapEngine.tapX / scale);
-    }
-
-    // Tap ripple feedback
-    this.showTapRipple(tx, ty);
-
+    this.showTapMarker(tx, ty);
     closePopup();
   },
 
-  // ── TOUCH PAN ──
+  showTapMarker(x, y) {
+    const ctx = this.ctx;
+    ctx.strokeStyle = 'rgba(92,184,232,0.9)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x - 12, y); ctx.lineTo(x + 12, y);
+    ctx.moveTo(x, y - 12); ctx.lineTo(x, y + 12);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(92,184,232,0.5)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(x, y, 16, 0, Math.PI * 2);
+    ctx.stroke();
+    setTimeout(() => this.render(), 1500);
+  },
+
+  // ── TOUCH ──
   onTouchStart(e) {
-    this.didDrag = false;
     e.preventDefault();
+    this.didDrag = false;
     if (e.touches.length === 2) {
-      // pinch to zoom
       this.dragging = false;
       this.lastPinchDist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
@@ -498,88 +493,54 @@ this.canvas.addEventListener('touchend', (e) => {
       this.lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     }
   },
+
   onTouchMove(e) {
     e.preventDefault();
-    this.didDrag = true;
     if (e.touches.length === 2) {
-      // pinch zoom
+      this.didDrag = true;
       const dist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
       );
       if (this.lastPinchDist) {
-        const zoomFactor = dist / this.lastPinchDist;
-        this.scale = Math.max(0.3, Math.min(8, this.scale * zoomFactor));
+        const factor = dist / this.lastPinchDist;
+        this.scale = Math.max(0.2, Math.min(10, this.scale * factor));
         this.render();
         this.showZoomLevel();
       }
       this.lastPinchDist = dist;
     } else if (this.dragging) {
-      this.offset.x += e.touches[0].clientX - this.lastTouch.x;
-      this.offset.y += e.touches[0].clientY - this.lastTouch.y;
+      const dx = e.touches[0].clientX - this.lastTouch.x;
+      const dy = e.touches[0].clientY - this.lastTouch.y;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) this.didDrag = true;
+      this.offset.x += dx;
+      this.offset.y += dy;
       this.lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       this.render();
     }
   },
 
+  onTouchEnd(e) {
+    if (e.changedTouches.length === 1 && !this.didDrag) {
+      const touch = e.changedTouches[0];
+      this.onTap({ clientX: touch.clientX, clientY: touch.clientY });
+    }
+    this.dragging = false;
+  },
 
-  showTapRipple(x, y) {
-  this.tapPulses = this.tapPulses || [];
-  this.tapPulses.push({ x, y, scale: 0, alpha: 1 });
-  if (!this.pulseLoop) {
-    this.pulseLoop = true;
-    const animate = () => {
-      this.tapPulses = (this.tapPulses || []).filter(p => p.alpha > 0);
-      if (this.tapPulses.length === 0) { this.pulseLoop = false; return; }
-      this.tapPulses.forEach(p => {
-        p.scale += 0.15;
-        p.alpha -= 0.035;
-        const ctx = this.ctx;
-        const size = 24 * p.scale;
-
-        // outer ring
-        ctx.strokeStyle = `rgba(92,184,232,${p.alpha * 0.8})`;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // inner ring
-        ctx.strokeStyle = `rgba(168,244,200,${p.alpha * 0.6})`;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, size * 0.5, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // center cross
-        ctx.strokeStyle = `rgba(92,184,232,${p.alpha})`;
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(p.x - 8, p.y);
-        ctx.lineTo(p.x + 8, p.y);
-        ctx.moveTo(p.x, p.y - 8);
-        ctx.lineTo(p.x, p.y + 8);
-        ctx.stroke();
-      });
-      requestAnimationFrame(animate);
-    };
-    requestAnimationFrame(animate);
-  }
-},
-
-showZoomLevel() {
-  let el = document.getElementById('zoom-indicator');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'zoom-indicator';
-    el.style.cssText = `position:fixed;bottom:100px;left:16px;font-family:'Space Mono',monospace;font-size:8px;color:rgba(92,184,232,0.5);letter-spacing:1px;z-index:100;pointer-events:none;transition:opacity 0.5s;`;
-    document.body.appendChild(el);
-  }
-  el.textContent = `${Math.round(this.scale * 100)}%`;
-  el.style.opacity = '1';
-  clearTimeout(this.zoomTimer);
-  this.zoomTimer = setTimeout(() => el.style.opacity = '0', 1500);
-},
+  showZoomLevel() {
+    let el = document.getElementById('zoom-indicator');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'zoom-indicator';
+      el.style.cssText = `position:fixed;bottom:100px;left:16px;font-family:'Space Mono',monospace;font-size:9px;color:rgba(92,184,232,0.7);letter-spacing:1px;z-index:100;pointer-events:none;transition:opacity 0.5s;background:rgba(8,12,16,0.8);padding:4px 8px;border-radius:4px;`;
+      document.body.appendChild(el);
+    }
+    el.textContent = `${Math.round(this.scale * 100)}%`;
+    el.style.opacity = '1';
+    clearTimeout(this.zoomTimer);
+    this.zoomTimer = setTimeout(() => el.style.opacity = '0', 2000);
+  },
 
   startNavigation(node) {
     this.navigating = node;
@@ -587,7 +548,6 @@ showZoomLevel() {
 
   stopNavigation() {
     this.navigating = null;
-    this.navTarget = null;
     this.render();
   },
 

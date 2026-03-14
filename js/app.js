@@ -91,12 +91,27 @@ const App = {
 userTag.textContent = App.user.name || 'anonymous';
 userTag.style.cursor = 'pointer';
 userTag.onclick = () => {
-  const newName = prompt('change your name:', App.user.name || '');
-  if (newName === null) return;
-  App.user.name = newName.trim() || null;
-  localStorage.setItem('dm_user', JSON.stringify(App.user));
-  userTag.textContent = App.user.name || 'anonymous';
+  const panel = document.createElement('div');
+  panel.style.cssText = `position:fixed;bottom:0;left:0;right:0;background:rgba(8,12,16,0.99);border-top:1px solid rgba(92,184,232,0.2);padding:24px 20px 40px;z-index:9999;`;
+  panel.innerHTML = `
+    <div style="font-family:'Space Mono',monospace;font-size:8px;color:rgba(160,210,245,0.4);letter-spacing:2px;margin-bottom:16px;">change your name</div>
+    <input id="rename-input" value="${App.user.name || ''}" placeholder="a name or nothing" maxlength="24" autocomplete="off" style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(92,184,232,0.3);padding:12px 0;color:#e8f4ff;font-family:'Cormorant Garamond',serif;font-size:28px;outline:none;margin-bottom:24px;">
+    <div style="display:flex;gap:8px;">
+      <button onclick="
+        const v=document.getElementById('rename-input').value.trim();
+        App.user.name=v||null;
+        localStorage.setItem('dm_user',JSON.stringify(App.user));
+        document.getElementById('user-tag').textContent=App.user.name||'anonymous';
+        this.closest('div[style]').remove();
+      " style="flex:1;padding:13px;background:rgba(92,184,232,0.08);border:1px solid rgba(92,184,232,0.3);color:rgba(92,184,232,0.9);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;border-radius:8px;">save</button>
+      <button onclick="this.closest('div[style]').remove()" style="padding:13px 16px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.3);font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;border-radius:8px;">cancel</button>
+    </div>
+  `;
+  document.body.appendChild(panel);
+  setTimeout(() => document.getElementById('rename-input')?.focus(), 100);
 };
+
+
       MapEngine.init();
       MapHint.show();
 setTimeout(() => Tour.start(), 2000);
