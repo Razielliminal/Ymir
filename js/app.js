@@ -87,7 +87,16 @@ const App = {
     fadeOut('onboard-screen');
     setTimeout(() => {
       document.getElementById('app-screen').classList.remove('hidden');
-      document.getElementById('user-tag').textContent = App.user.name || 'anonymous';
+      const userTag = document.getElementById('user-tag');
+userTag.textContent = App.user.name || 'anonymous';
+userTag.style.cursor = 'pointer';
+userTag.onclick = () => {
+  const newName = prompt('change your name:', App.user.name || '');
+  if (newName === null) return;
+  App.user.name = newName.trim() || null;
+  localStorage.setItem('dm_user', JSON.stringify(App.user));
+  userTag.textContent = App.user.name || 'anonymous';
+};
       MapEngine.init();
       MapHint.show();
 setTimeout(() => Tour.start(), 2000);

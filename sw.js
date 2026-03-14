@@ -1,4 +1,4 @@
-const CACHE = 'ymir-v3';
+const CACHE = 'ymir-v5';
 const FILES = [
   '/',
   '/index.html',

@@ -40,8 +40,16 @@ this.canvas.addEventListener('wheel', (e) => {
   const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
   this.scale = Math.max(0.3, Math.min(8, this.scale * zoomFactor));
   this.render();
+  this.showZoomLevel();
 }, { passive: false });
     this.canvas.addEventListener('click', (e) => this.onTap(e));
+this.canvas.addEventListener('touchend', (e) => {
+  if (e.changedTouches.length === 1 && !this.didDrag) {
+    const touch = e.changedTouches[0];
+    this.onTap({ clientX: touch.clientX, clientY: touch.clientY, preventDefault: () => {} });
+  }
+  this.didDrag = false;
+});
 
     if (window.DeviceOrientationEvent) {
       window.addEventListener('deviceorientation', (e) => {
@@ -471,6 +479,7 @@ this.canvas.addEventListener('wheel', (e) => {
 
   // ── TOUCH PAN ──
   onTouchStart(e) {
+    this.didDrag = false;
     e.preventDefault();
     if (e.touches.length === 2) {
       // pinch to zoom
@@ -486,6 +495,7 @@ this.canvas.addEventListener('wheel', (e) => {
   },
   onTouchMove(e) {
     e.preventDefault();
+    this.didDrag = true;
     if (e.touches.length === 2) {
       // pinch zoom
       const dist = Math.hypot(
@@ -496,6 +506,7 @@ this.canvas.addEventListener('wheel', (e) => {
         const zoomFactor = dist / this.lastPinchDist;
         this.scale = Math.max(0.3, Math.min(8, this.scale * zoomFactor));
         this.render();
+        this.showZoomLevel();
       }
       this.lastPinchDist = dist;
     } else if (this.dragging) {
@@ -508,34 +519,62 @@ this.canvas.addEventListener('wheel', (e) => {
 
 
   showTapRipple(x, y) {
-    this.tapRipples = this.tapRipples || [];
-    this.tapRipples.push({ x, y, r: 0, alpha: 1, t: Date.now() });
-    if (!this.rippleLoop) {
-      this.rippleLoop = true;
-      const animate = () => {
-        this.tapRipples = (this.tapRipples || []).filter(r => r.alpha > 0);
-        if (this.tapRipples.length === 0) { this.rippleLoop = false; return; }
-        this.tapRipples.forEach(r => {
-          r.r += 2.5;
-          r.alpha -= 0.04;
-          const ctx = this.ctx;
-          ctx.strokeStyle = `rgba(92,184,232,${r.alpha})`;
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
-          ctx.stroke();
+  this.tapPulses = this.tapPulses || [];
+  this.tapPulses.push({ x, y, scale: 0, alpha: 1 });
+  if (!this.pulseLoop) {
+    this.pulseLoop = true;
+    const animate = () => {
+      this.tapPulses = (this.tapPulses || []).filter(p => p.alpha > 0);
+      if (this.tapPulses.length === 0) { this.pulseLoop = false; return; }
+      this.tapPulses.forEach(p => {
+        p.scale += 0.15;
+        p.alpha -= 0.035;
+        const ctx = this.ctx;
+        const size = 24 * p.scale;
 
-          // small center dot
-          ctx.fillStyle = `rgba(92,184,232,${r.alpha * 1.5})`;
-          ctx.beginPath();
-          ctx.arc(r.x, r.y, 3, 0, Math.PI * 2);
-          ctx.fill();
-        });
-        requestAnimationFrame(animate);
-      };
+        // outer ring
+        ctx.strokeStyle = `rgba(92,184,232,${p.alpha * 0.8})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // inner ring
+        ctx.strokeStyle = `rgba(168,244,200,${p.alpha * 0.6})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, size * 0.5, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // center cross
+        ctx.strokeStyle = `rgba(92,184,232,${p.alpha})`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(p.x - 8, p.y);
+        ctx.lineTo(p.x + 8, p.y);
+        ctx.moveTo(p.x, p.y - 8);
+        ctx.lineTo(p.x, p.y + 8);
+        ctx.stroke();
+      });
       requestAnimationFrame(animate);
-    }
-  },
+    };
+    requestAnimationFrame(animate);
+  }
+},
+
+showZoomLevel() {
+  let el = document.getElementById('zoom-indicator');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'zoom-indicator';
+    el.style.cssText = `position:fixed;bottom:100px;left:16px;font-family:'Space Mono',monospace;font-size:8px;color:rgba(92,184,232,0.5);letter-spacing:1px;z-index:100;pointer-events:none;transition:opacity 0.5s;`;
+    document.body.appendChild(el);
+  }
+  el.textContent = `${Math.round(this.scale * 100)}%`;
+  el.style.opacity = '1';
+  clearTimeout(this.zoomTimer);
+  this.zoomTimer = setTimeout(() => el.style.opacity = '0', 1500);
+},
 
   startNavigation(node) {
     this.navigating = node;
