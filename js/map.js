@@ -45,11 +45,17 @@ this.canvas.addEventListener('wheel', (e) => {
     this.canvas.addEventListener('click', (e) => this.onTap(e));
 this.canvas.addEventListener('touchend', (e) => {
   if (e.changedTouches.length === 1 && !this.didDrag) {
+    e.preventDefault();
     const touch = e.changedTouches[0];
-    this.onTap({ clientX: touch.clientX, clientY: touch.clientY, preventDefault: () => {} });
+    const rect = this.canvas.getBoundingClientRect();
+    this.onTap({ 
+      clientX: touch.clientX, 
+      clientY: touch.clientY,
+      target: this.canvas
+    });
   }
   this.didDrag = false;
-});
+}, { passive: false });
 
     if (window.DeviceOrientationEvent) {
       window.addEventListener('deviceorientation', (e) => {
@@ -134,7 +140,7 @@ this.canvas.addEventListener('touchend', (e) => {
     const gridSize = 40;
     const gridSmall = 8;
 
-    ctx.strokeStyle = 'rgba(92,184,232,0.04)';
+    ctx.strokeStyle = 'rgba(92,184,232,0.08)';
     ctx.lineWidth = 0.5;
     for (let x = (cx % gridSmall); x < W; x += gridSmall) {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
@@ -143,7 +149,7 @@ this.canvas.addEventListener('touchend', (e) => {
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
     }
 
-    ctx.strokeStyle = 'rgba(92,184,232,0.1)';
+    ctx.strokeStyle = 'rgba(92,184,232,0.2)';
     ctx.lineWidth = 0.5;
     for (let x = (cx % gridSize); x < W; x += gridSize) {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
@@ -152,11 +158,10 @@ this.canvas.addEventListener('touchend', (e) => {
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
     }
 
-    ctx.strokeStyle = 'rgba(92,184,232,0.18)';
+    ctx.strokeStyle = 'rgba(92,184,232,0.35)';
     ctx.lineWidth = 0.5;
     ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
-
     // Draw nodes
     App.nodes.forEach(node => {
       const nx = cx + node.x * this.scale;
