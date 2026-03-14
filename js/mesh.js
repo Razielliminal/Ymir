@@ -403,6 +403,16 @@ const Mesh = {
         }
         break;
 
+      case 'weather':
+  if (packet.weather) {
+    const existing = localStorage.getItem('ymir_weather');
+    if (!existing) {
+      localStorage.setItem('ymir_weather', JSON.stringify(packet.weather));
+      Weather.display(packet.weather);
+    }
+  }
+  break;
+
       case 'peer':
         App.meshPeers++;
         document.getElementById('mesh-count').textContent = 'mesh active';

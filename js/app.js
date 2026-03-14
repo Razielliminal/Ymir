@@ -695,10 +695,127 @@ if ('serviceWorker' in navigator) {
   }).catch(e => console.warn('[SW] failed:', e));
 }
 
+// ── WEATHER ──
+const Weather = {
+  data: null,
+
+  async init() {
+    // check if we got weather from mesh already
+    const cached = localStorage.getItem('ymir_weather');
+    if (cached) {
+      const w = JSON.parse(cached);
+      // use if less than 2 hours old
+      if (Date.now() - w.t < 2 * 60 * 60 * 1000) {
+        this.display(w);
+        return;
+      }
+    }
+    // try to fetch real weather
+    await this.fetch();
+  },
+
+  async fetch() {
+    try {
+      // get GPS first
+      const pos = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+      });
+      const { latitude, longitude } = pos.coords;
+
+      // get location name
+      let locationName = 'Your Area';
+      try {
+        const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+        const geoData = await geo.json();
+        locationName = geoData.address?.city || geoData.address?.town || geoData.address?.village || geoData.address?.county || 'Your Area';
+      } catch(e) {}
+
+      // get weather
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weathercode&daily=temperature_2m_max,weathercode&timezone=auto&forecast_days=4`);
+      const data = await res.json();
+
+      const w = {
+        location: locationName,
+        temp: Math.round(data.current.temperature_2m),
+        desc: this.codeToDesc(data.current.weathercode),
+        forecast: data.daily.time.slice(1, 5).map((day, i) => ({
+          day: new Date(day).toLocaleDateString('en', { weekday: 'short' }),
+          temp: Math.round(data.daily.temperature_2m_max[i + 1]),
+        })),
+        t: Date.now()
+      };
+
+      this.data = w;
+      localStorage.setItem('ymir_weather', JSON.stringify(w));
+      this.display(w);
+
+      // broadcast to mesh so others get it too
+      Mesh.broadcast({ type: 'weather', weather: w });
+
+    } catch(e) {
+      // no internet or GPS denied — show generic
+      this.displayGeneric();
+    }
+  },
+
+  display(w) {
+    document.getElementById('weather-location').textContent = w.location;
+    document.getElementById('fake-temp').textContent = `${w.temp}°`;
+    document.getElementById('weather-desc').textContent = w.desc;
+    const fc = document.getElementById('weather-forecast');
+    if (fc && w.forecast) {
+      fc.innerHTML = w.forecast.map(d => `
+        <div style="text-align:center;color:#999;font-size:12px;">
+          <div style="font-size:18px;color:#555;">${d.temp}°</div>
+          ${d.day}
+        </div>
+      `).join('');
+    }
+  },
+
+  displayGeneric() {
+    const conditions = ['Partly Cloudy', 'Mostly Cloudy', 'Clear', 'Overcast', 'Light Rain'];
+    const temps = [18, 22, 24, 26, 28, 30, 32];
+    const temp = temps[Math.floor(Math.random() * temps.length)];
+    const desc = conditions[Math.floor(Math.random() * conditions.length)];
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const today = new Date().getDay();
+
+    document.getElementById('weather-location').textContent = '';
+    document.getElementById('fake-temp').textContent = `${temp}°`;
+    document.getElementById('weather-desc').textContent = desc;
+    const fc = document.getElementById('weather-forecast');
+    if (fc) {
+      fc.innerHTML = Array.from({length: 4}, (_, i) => `
+        <div style="text-align:center;color:#999;font-size:12px;">
+          <div style="font-size:18px;color:#555;">${temp + Math.floor(Math.random()*6) - 3}°</div>
+          ${days[(today + i + 1) % 7]}
+        </div>
+      `).join('');
+    }
+  },
+
+  codeToDesc(code) {
+    if (code === 0) return 'Clear Sky';
+    if (code <= 3) return 'Partly Cloudy';
+    if (code <= 9) return 'Foggy';
+    if (code <= 19) return 'Drizzle';
+    if (code <= 29) return 'Rain';
+    if (code <= 39) return 'Snow';
+    if (code <= 49) return 'Fog';
+    if (code <= 59) return 'Drizzle';
+    if (code <= 69) return 'Rain';
+    if (code <= 79) return 'Snow';
+    if (code <= 84) return 'Rain Showers';
+    if (code <= 94) return 'Thunderstorm';
+    return 'Stormy';
+  }
+};
+
 // ── CAMOUFLAGE ──
 let tapCount = 0;
 let tapTimer = null;
-
+Weather.init();
 document.getElementById('fake-temp').addEventListener('click', () => {
   tapCount++;
   clearTimeout(tapTimer);

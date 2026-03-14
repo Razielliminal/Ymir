@@ -19,15 +19,10 @@
 
 <div id="camouflage-screen">
   <div style="font-family:'DM Sans',sans-serif;background:#e8f4fd;width:100%;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
-    <div style="font-size:13px;color:#666;letter-spacing:1px;">Bengaluru, Karnataka</div>
-    <div id="fake-temp" style="font-size:96px;font-weight:200;color:#1a1a2e;line-height:1;cursor:default;">32°</div>
-    <div style="font-size:16px;color:#888;font-weight:300;">Partly Cloudy</div>
-    <div style="margin-top:32px;display:flex;gap:24px;">
-      <div style="text-align:center;color:#999;font-size:12px;"><div style="font-size:18px;color:#555;">29°</div>Mon</div>
-      <div style="text-align:center;color:#999;font-size:12px;"><div style="font-size:18px;color:#555;">31°</div>Tue</div>
-      <div style="text-align:center;color:#999;font-size:12px;"><div style="font-size:18px;color:#555;">28°</div>Wed</div>
-      <div style="text-align:center;color:#999;font-size:12px;"><div style="font-size:18px;color:#555;">33°</div>Thu</div>
-    </div>
+    <div id="weather-location" style="font-size:13px;color:#666;letter-spacing:1px;">Loading...</div>
+    <div id="fake-temp" style="font-size:96px;font-weight:200;color:#1a1a2e;line-height:1;cursor:default;">--°</div>
+    <div id="weather-desc" style="font-size:16px;color:#888;font-weight:300;">Checking weather...</div>
+    <div style="margin-top:32px;display:flex;gap:24px;" id="weather-forecast"></div>
   </div>
 </div>
 
