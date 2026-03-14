@@ -24,7 +24,10 @@ const MapEngine = {
     window.addEventListener('resize', () => this.resize());
 
     // ── TOUCH ──
-    this.canvas.addEventListener('touchstart', (e) => this.onTouchStart(e), { passive: false });
+    this.canvas.addEventListener('touchstart', (e) => {
+  console.log('touchstart fired');
+  this.onTouchStart(e);
+}, { passive: false });
     this.canvas.addEventListener('touchmove', (e) => this.onTouchMove(e), { passive: false });
     this.canvas.addEventListener('touchend', (e) => this.onTouchEnd(e), { passive: false });
 
@@ -316,14 +319,6 @@ const MapEngine = {
     ctx.translate(cx, cy);
     ctx.rotate(-this.heading);
 
-    // true north line — red, obvious
-    ctx.strokeStyle = 'rgba(255,80,80,0.7)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(0, -(radius - 6));
-    ctx.stroke();
-
     const miniScale = 0.15;
     App.nodes
       .filter(n => activeFilter === 'all' || n.type === activeFilter)
@@ -398,12 +393,15 @@ const MapEngine = {
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // direction line
+    // direction line — rotates with heading
     ctx.strokeStyle = '#5cb8e8';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(cx, cy);
-    ctx.lineTo(cx, cy - 12);
+    ctx.lineTo(
+      cx + Math.sin(this.heading) * 14,
+      cy - Math.cos(this.heading) * 14
+    );
     ctx.stroke();
 
     ctx.restore();
