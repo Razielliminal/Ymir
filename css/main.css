@@ -25,6 +25,8 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+body { background: #e8f4fd; }
+
 html, body {
   width: 100%; height: 100%;
   background: var(--bg);
@@ -271,13 +273,21 @@ body::before {
 
 /* ── BOTTOM CONTROLS ── */
 #bottom-controls {
-  position: absolute;
-  bottom: 40px; left: 0; right: 0;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 24px;
+  justify-content: flex-start;
+  gap: 20px;
+  padding: 12px 20px 32px;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  background: linear-gradient(to top, rgba(8,12,16,0.95), transparent);
 }
+
+#bottom-controls::-webkit-scrollbar { display: none; }
 
 #sos-btn {
   position: relative;
@@ -659,7 +669,8 @@ body::before {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 40px 32px 120px;
+  padding: 24px 24px 100px;
+  overflow-y: auto;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.4s ease;
@@ -676,7 +687,7 @@ body::before {
 }
 .tutorial-title {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 42px;
+  font-size: 32px;
   font-weight: 300;
   color: #e8f4ff;
   line-height: 1.1;
@@ -684,7 +695,7 @@ body::before {
 }
 .tutorial-body {
   font-family: 'DM Sans', sans-serif;
-  font-size: 15px;
+  font-size: 13px;
   color: rgba(160,210,245,0.6);
   line-height: 1.8;
   margin-bottom: 32px;

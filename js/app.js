@@ -356,6 +356,7 @@ const ThreatSensor = {
     if (App.threatMode) return;
     App.threatMode = true;
     document.getElementById('threat-overlay').classList.remove('hidden');
+    document.getElementById('threat-indicator').style.display = 'block';
     document.getElementById('threat-indicator').className = 'threat-active';
     document.getElementById('threat-indicator').textContent = '● THREAT';
     // Dim screen, pause broadcasts
@@ -365,6 +366,7 @@ const ThreatSensor = {
   clearThreat() {
     App.threatMode = false;
     document.getElementById('threat-overlay').classList.add('hidden');
+    document.getElementById('threat-indicator').style.display = 'none';
     document.getElementById('threat-indicator').className = 'threat-safe';
     document.getElementById('threat-indicator').textContent = '● CLEAR';
     Mesh.resumeBroadcast();

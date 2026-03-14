@@ -1,7 +1,7 @@
 {
-  "name": "ymir",
-  "short_name": "ymir",
-  "description": "ground truth from the ground, not from above",
+  "name": "weather",
+  "short_name": "weather",
+  "description": "ground truth from the ground, not from above.",
   "start_url": "/",
   "display": "fullscreen",
   "background_color": "#080808",
