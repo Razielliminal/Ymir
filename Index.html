@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ymir</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#080808">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/main.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
+</head>
+<body>
+
+
+<div id="camouflage-screen">
+  <div style="font-family:'DM Sans',sans-serif;background:#e8f4fd;width:100%;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
+    <div style="font-size:13px;color:#666;letter-spacing:1px;">Bengaluru, Karnataka</div>
+    <div id="fake-temp" style="font-size:96px;font-weight:200;color:#1a1a2e;line-height:1;cursor:default;">32°</div>
+    <div style="font-size:16px;color:#888;font-weight:300;">Partly Cloudy</div>
+    <div style="margin-top:32px;display:flex;gap:24px;">
+      <div style="text-align:center;color:#999;font-size:12px;"><div style="font-size:18px;color:#555;">29°</div>Mon</div>
+      <div style="text-align:center;color:#999;font-size:12px;"><div style="font-size:18px;color:#555;">31°</div>Tue</div>
+      <div style="text-align:center;color:#999;font-size:12px;"><div style="font-size:18px;color:#555;">28°</div>Wed</div>
+      <div style="text-align:center;color:#999;font-size:12px;"><div style="font-size:18px;color:#555;">33°</div>Thu</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- BOOT SCREEN -->
+<div id="boot-screen" style="display:none;">
+  <div class="boot-inner">
+    <div class="boot-title">ymir</div>
+    <div class="boot-sub">ground truth from the ground, not from above.</div>
+    <div class="boot-pulse"></div>
+    <div class="boot-status" id="boot-status">initializing mesh...</div>
+  </div>
+</div>
+
+<!-- ONBOARDING -->
+<div id="onboard-screen" class="screen hidden">
+
+  <!-- Tutorial slide container -->
+  <div id="tutorial-slides">
+
+    <!-- Slide 1 -->
+    <div class="tutorial-slide active" id="slide-1">
+      <div class="tutorial-icon">◈</div>
+      <div class="tutorial-title">no internet.<br>no server.<br>no trace.</div>
+      <div class="tutorial-body">ymir works by connecting phones directly to each other nearby. nothing you do here travels through the internet. no company sees it. no government can intercept it. it lives only on your device.</div>
+      <button class="tutorial-next" onclick="nextSlide(2)">next →</button>
+    </div>
+
+    <!-- Slide 2 -->
+    <div class="tutorial-slide" id="slide-2">
+      <div class="tutorial-icon">⊞</div>
+      <div class="tutorial-title">the map<br>is blank<br>on purpose.</div>
+      <div class="tutorial-body">no street names. no landmarks. only pins that people near you have dropped. tap anywhere on the map to mark a place. tap a pin to see what it is and navigate to it.</div>
+      <button class="tutorial-next" onclick="nextSlide(3)">next →</button>
+      <button class="tutorial-back" onclick="nextSlide(1)">← back</button>
+    </div>
+
+    <!-- Slide 3 — THE MOST IMPORTANT ONE -->
+    <div class="tutorial-slide" id="slide-3">
+      <div class="tutorial-icon" style="color:#ff3b5c;">⚠</div>
+      <div class="tutorial-title" style="color:#ff3b5c;">never write<br>real names.</div>
+      <div class="tutorial-body">do not write the real name of a street, building, or neighborhood. write only names that people who live there already know.<br><br><span style="color:rgba(168,244,200,0.9);">✓ "the blue door"<br>✓ "abu khalid's place"<br>✓ "the school everyone knows"</span><br><br><span style="color:rgba(255,59,92,0.7);">✗ real street names<br>✗ real building names<br>✗ anything a stranger could search</span><br><br>if this phone is ever found, those names mean nothing to an outsider. that is your protection.</div>
+      <button class="tutorial-next" onclick="nextSlide(4)">i understand →</button>
+      <button class="tutorial-back" onclick="nextSlide(2)">← back</button>
+    </div>
+
+    <!-- Slide 4 -->
+    <div class="tutorial-slide" id="slide-4">
+      <div class="tutorial-icon">ᛉ</div>
+      <div class="tutorial-title">if you're<br>in danger.</div>
+      <div class="tutorial-body">this app looks like a weather app to anyone who picks up your phone. the real app is hidden behind the temperature.<br><br>if someone is about to check your phone — press and hold the <span style="color:rgba(92,184,232,0.9);">ymir ᛉ</span> symbol at the top for 3 seconds.<br><br>everything on this device will be erased immediately. nothing left to find.</div>
+      <button class="tutorial-next" onclick="nextSlide(5)">next →</button>
+      <button class="tutorial-back" onclick="nextSlide(3)">← back</button>
+    </div>
+
+    <!-- Slide 5 — name -->
+    <div class="tutorial-slide" id="slide-5">
+      <div class="tutorial-icon">◉</div>
+      <div class="tutorial-title">who are you<br>right now?</div>
+      <div class="tutorial-body">you don't need a real name. a nickname is fine. leaving it blank is fine too. whatever you write stays on your phone only — it never leaves your device.</div>
+      <input type="text" id="name-input" placeholder="a name or nothing" maxlength="24" autocomplete="off" spellcheck="false" style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(92,184,232,0.2);padding:16px 0;color:#e8f4ff;font-family:'Cormorant Garamond',serif;font-size:28px;outline:none;text-align:center;margin:24px 0;">
+      <div style="font-family:'Space Mono',monospace;font-size:8px;color:rgba(160,210,245,0.3);letter-spacing:1px;text-align:center;margin-bottom:24px;">leave blank to stay anonymous</div>
+      <button class="tutorial-next" onclick="enterApp()">enter ymir →</button>
+      <button class="tutorial-back" onclick="nextSlide(4)">← back</button>
+    </div>
+
+  </div>
+
+  <!-- Progress dots -->
+  <div id="tutorial-dots">
+    <span class="tdot active" id="dot-1"></span>
+    <span class="tdot" id="dot-2"></span>
+    <span class="tdot" id="dot-3"></span>
+    <span class="tdot" id="dot-4"></span>
+    <span class="tdot" id="dot-5"></span>
+  </div>
+
+</div>
+
+<!-- HELP PANEL (accessible from inside app) -->
+<div id="help-panel" class="screen hidden" style="overflow-y:auto;background:var(--bg);z-index:950;">
+  <div style="max-width:480px;margin:0 auto;padding:40px 24px 100px;">
+    <div style="font-family:'Space Mono',monospace;font-size:8px;color:rgba(160,210,245,0.4);letter-spacing:3px;text-transform:uppercase;margin-bottom:32px;">how to use ymir</div>
+
+    <div class="help-section">
+      <div class="help-q">how does it work without internet?</div>
+      <div class="help-a">your phone talks directly to phones nearby — no internet, no server, no middleman. like walkie talkies, but for information. range is roughly 50–100 metres.</div>
+    </div>
+
+    <div class="help-section">
+      <div class="help-q">how do i find food, water, or shelter?</div>
+      <div class="help-a">look at the map. pins dropped by people near you will appear. tap a pin to see what it is. tap "navigate →" and use the small circular map in the corner as a compass — walk toward the arrow until you arrive.</div>
+    </div>
+
+    <div class="help-section">
+      <div class="help-q">how do i mark a place for others?</div>
+      <div class="help-a">tap anywhere on the map where you want to place the pin. then tap the + button at the bottom. choose what type of place it is, give it a name only locals would understand, and tap "drop pin."</div>
+    </div>
+
+    <div class="help-section">
+      <div class="help-q">what names should i use for pins?</div>
+      <div class="help-a" style="color:rgba(255,200,200,0.8);">never use real street names or building names. use only names that people who live there already know — "the blue door", "abu khalid's place", "the school everyone knows." if this phone is ever found, those names should mean nothing to a stranger.</div>
+    </div>
+
+    <div class="help-section">
+      <div class="help-q">how do i tell people i'm safe?</div>
+      <div class="help-a">tap the ◉ button at the bottom. choose "i am safe", "i am injured", or "i need help." it sends silently to everyone nearby with no sound.</div>
+    </div>
+
+    <div class="help-section">
+      <div class="help-q">how do i find a family member?</div>
+      <div class="help-a">tap the ♡ button at the bottom. post their name and any details. everyone nearby will see it. if someone finds them, they can update the post.</div>
+    </div>
+
+    <div class="help-section">
+      <div class="help-q">how do i share my pins with someone nearby?</div>
+      <div class="help-a">tap the ⇄ button. tap "show my pins as QR." show your screen to the other person. they open ymir, tap ⇄, tap "scan QR code", and point their camera at your screen. your pins transfer instantly with no internet.</div>
+    </div>
+
+    <div class="help-section">
+      <div class="help-q">what if someone checks my phone?</div>
+      <div class="help-a">the app looks like a weather forecast to anyone who opens it. to get back in, tap the temperature three times quickly. if you need to erase everything immediately — press and hold the <span style="color:rgba(92,184,232,0.8);">ymir ᛉ</span> text at the top of the screen for 3 seconds. everything will be deleted instantly.</div>
+    </div>
+
+    <div class="help-section">
+      <div class="help-q">does anyone know i'm using this?</div>
+      <div class="help-a">no. no account. no login. no data sent to any server. ymir does not know you exist. your government does not know you exist. we do not know you exist.</div>
+    </div>
+
+    <button onclick="document.getElementById('help-panel').classList.add('hidden')" style="width:100%;padding:14px;background:transparent;border:1px solid rgba(92,184,232,0.2);color:rgba(92,184,232,0.6);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:8px;margin-top:16px;">close</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app-screen" class="screen hidden">
+
+  <!-- MINIMAP (Genshin-style) -->
+  <div id="minimap-container">
+    <canvas id="minimap" width="108" height="108"></canvas>
+    <div id="mesh-count">0 nearby</div>
+  </div>
+
+  <!-- MAIN MAP -->
+  <canvas id="main-map"></canvas>
+
+  <!-- HUD OVERLAYS -->
+  <div id="hud">
+
+    <!-- Top bar -->
+    <div id="top-bar">
+      <div style="display:flex;align-items:center;gap:12px;">
+  <div id="user-tag"></div>
+  <button onclick="document.getElementById('help-panel').classList.remove('hidden')" style="background:transparent;border:1px solid rgba(92,184,232,0.25);border-radius:50%;width:24px;height:24px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(160,210,245,0.7);cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;">?</button>
+</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+  <div id="ymir-logo">ymir ᛉ</div>
+  <div id="threat-indicator" class="threat-safe">●  CLEAR</div>
+</div>
+    </div>
+
+    <!-- Node info popup -->
+    <div id="node-popup" class="hidden">
+      <div id="node-popup-icon"></div>
+      <div id="node-popup-name"></div>
+      <div id="node-popup-desc"></div>
+      <div id="node-popup-distance"></div>
+      <button id="navigate-btn">navigate →</button>
+      <button id="delete-node-btn" onclick="deleteNode()" style="width:100%;padding:13px;background:transparent;border:1px solid rgba(255,59,92,0.3);color:#ff3b5c;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;border-radius:8px;transition:all 0.2s;margin-bottom:10px;">
+  remove pin
+</button>
+<button id="confirm-node-btn" onclick="confirmNode()" class="hidden" style="width:100%;padding:13px;background:transparent;border:1px solid rgba(92,184,232,0.3);color:rgba(92,184,232,0.8);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;border-radius:8px;transition:all 0.2s;margin-bottom:10px;">
+  ✓ confirm this is real
+</button>
+<button id="flag-node-btn" onclick="flagNodeGone()" class="hidden" style="width:100%;padding:13px;background:transparent;border:1px solid rgba(255,180,80,0.3);color:#ffd6a0;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;border-radius:8px;transition:all 0.2s;margin-bottom:10px;">
+  this is gone
+</button>
+<div id="node-comments-section" style="margin-bottom:10px;"></div>
+<div id="node-comment-input-row" class="hidden" style="display:flex;gap:8px;margin-bottom:10px;">
+  <input id="node-comment-input" placeholder="add a note..." maxlength="80" autocomplete="off" style="flex:1;background:transparent;border:none;border-bottom:1px solid rgba(92,184,232,0.2);padding:8px 0;color:#e8f4ff;font-family:'Space Mono',monospace;font-size:10px;outline:none;">
+  <button onclick="submitComment()" style="background:transparent;border:1px solid rgba(92,184,232,0.3);color:rgba(92,184,232,0.8);font-family:'Space Mono',monospace;font-size:9px;padding:6px 10px;cursor:pointer;border-radius:6px;">post</button>
+</div>
+      <button id="cancel-nav-btn" onclick="cancelNavigation()" class="hidden" style="width:100%;padding:13px;background:transparent;border:1px solid rgba(244,167,185,0.3);color:#f4a7b9;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;border-radius:8px;transition:all 0.2s;margin-bottom:10px;">
+  cancel navigation
+</button>
+      <button id="close-popup" onclick="closePopup()">✕</button>
+    <button onclick="App.clearMyNodes()" style="position:fixed;bottom:10px;left:16px;background:transparent;border:none;font-family:'Space Mono',monospace;font-size:7px;color:rgba(255,240,243,0.08);letter-spacing:1px;cursor:pointer;">clear pins</button>
+    </div>
+
+    <div id="transfer-panel" class="panel hidden">
+  <div class="panel-title">transfer data</div>
+  <div style="font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,240,243,0.4);letter-spacing:1px;margin-bottom:24px;line-height:1.8;">
+    show your qr code to someone nearby.<br>they scan it to receive your pins.
+  </div>
+
+  <!-- Show my QR -->
+  <div id="qr-container" style="display:flex;justify-content:center;margin-bottom:20px;">
+    <div id="qr-code" style="background:white;padding:12px;border-radius:8px;"></div>
+  </div>
+  <button onclick="generateQR()" style="width:100%;padding:13px;background:transparent;border:1px solid rgba(244,167,185,0.3);color:#f4a7b9;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;border-radius:8px;margin-bottom:24px;">show my pins as qr</button>
+
+  <!-- Scan QR -->
+  <div style="font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,240,243,0.4);letter-spacing:1px;margin-bottom:12px;">or scan someone else's code</div>
+  <video id="qr-video" style="width:100%;border-radius:8px;margin-bottom:12px;display:none;"></video>
+  <button id="scan-btn" onclick="startQRScan()" style="width:100%;padding:13px;background:transparent;border:1px solid rgba(244,167,185,0.3);color:#f4a7b9;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;border-radius:8px;margin-bottom:10px;">scan qr code</button>
+  <div id="scan-result" style="font-family:'Space Mono',monospace;font-size:9px;color:#a8f4c8;letter-spacing:1px;margin-bottom:16px;min-height:16px;"></div>
+
+  <button onclick="stopQRScan(); document.getElementById('transfer-panel').classList.add('hidden')" style="width:100%;padding:13px;background:transparent;border:1px solid rgba(255,240,243,0.1);color:rgba(255,240,243,0.4);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:8px;">close</button>
+  
+</div>
+<div id="family-panel" class="panel hidden">
+      <div class="panel-title">find family</div>
+      <div style="font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,240,243,0.4);letter-spacing:1px;margin-bottom:24px;line-height:1.8;">post a name. syncs to everyone nearby.<br>expires in 2 hours.</div>
+      <input id="family-name-input" placeholder="name" style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(244,167,185,0.2);padding:13px 0;color:#fff0f3;font-family:'Cormorant Garamond',serif;font-size:22px;font-style:italic;outline:none;margin-bottom:16px;">
+      <select id="family-status-select" style="width:100%;background:#110a0d;border:1px solid rgba(244,167,185,0.2);padding:13px;color:#fff0f3;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;outline:none;margin-bottom:16px;border-radius:8px;">
+        <option value="looking">looking for them</option>
+        <option value="found">found them / I am safe</option>
+      </select>
+      <input id="family-note-input" placeholder="any details (optional)" style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(244,167,185,0.2);padding:13px 0;color:#fff0f3;font-family:'Space Mono',monospace;font-size:11px;outline:none;margin-bottom:24px;">
+      <button onclick="postFamilyEntry()" style="width:100%;padding:13px;background:rgba(244,167,185,0.08);border:1px solid rgba(244,167,185,0.3);color:#f4a7b9;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;border-radius:8px;margin-bottom:24px;">post</button>
+      <div id="family-entries"></div>
+      <button onclick="closeFamilyFinder()" style="width:100%;padding:13px;background:transparent;border:1px solid rgba(255,240,243,0.1);color:rgba(255,240,243,0.4);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:8px;margin-top:16px;">close</button>
+    </div>
+<div id="music-panel" class="panel hidden">
+  <div class="panel-title">play music</div>
+  <div style="font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,240,243,0.4);letter-spacing:1px;margin-bottom:24px;line-height:1.8;">
+    propose a track. majority vote plays it<br>on everyone's device simultaneously.
+  </div>
+
+  <!-- Propose -->
+  <input type="file" id="music-file" accept="audio/*" style="display:none" onchange="proposeTrack(this)">
+  <button onclick="document.getElementById('music-file').click()" style="width:100%;padding:13px;background:rgba(244,167,185,0.08);border:1px solid rgba(244,167,185,0.3);color:#f4a7b9;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;border-radius:8px;margin-bottom:24px;">propose a track</button>
+
+  <!-- Now playing -->
+  <div id="now-playing" class="hidden" style="border:1px solid rgba(244,167,185,0.2);border-radius:10px;padding:16px;margin-bottom:20px;">
+    <div style="font-family:'Space Mono',monospace;font-size:8px;color:rgba(255,240,243,0.4);letter-spacing:2px;margin-bottom:8px;">NOW PLAYING</div>
+    <div id="now-playing-name" style="font-family:'Cormorant Garamond',serif;font-size:22px;font-style:italic;color:#fff0f3;margin-bottom:12px;"></div>
+    <button onclick="stopMusic()" style="width:100%;padding:11px;background:transparent;border:1px solid rgba(255,59,92,0.3);color:#ff3b5c;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:8px;">stop</button>
+  </div>
+
+  <!-- Proposals -->
+  <div id="music-proposals"></div>
+
+  <button onclick="document.getElementById('music-panel').classList.add('hidden')" style="width:100%;padding:13px;background:transparent;border:1px solid rgba(255,240,243,0.1);color:rgba(255,240,243,0.4);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:8px;margin-top:16px;">close</button>
+</div>
+    
+    <!-- Bottom controls -->
+    <div id="bottom-controls">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <button id="sos-btn" onclick="triggerSOS()">SOS</button>
+        <span style="font-family:'Space Mono',monospace;font-size:7px;color:rgba(160,210,245,0.5);letter-spacing:1px;">distress</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <button onclick="document.getElementById('status-panel').classList.toggle('hidden')" style="width:44px;height:44px;border-radius:50%;background:transparent;border:1px solid rgba(92,184,232,0.2);color:rgba(92,184,232,0.55);font-size:14px;cursor:pointer;">◉</button>
+        <span style="font-family:'Space Mono',monospace;font-size:7px;color:rgba(160,210,245,0.5);letter-spacing:1px;">status</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <button onclick="openSearchPanel()" style="width:44px;height:44px;border-radius:50%;background:transparent;border:1px solid rgba(92,184,232,0.2);color:rgba(92,184,232,0.55);font-size:14px;cursor:pointer;">⌕</button>
+        <span style="font-family:'Space Mono',monospace;font-size:7px;color:rgba(160,210,245,0.5);letter-spacing:1px;">search</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <button id="add-btn" onclick="openNodeCreator()">+</button>
+        <span style="font-family:'Space Mono',monospace;font-size:7px;color:rgba(160,210,245,0.5);letter-spacing:1px;">mark</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <button onclick="document.getElementById('notes-panel').classList.remove('hidden');renderNotes()" style="width:44px;height:44px;border-radius:50%;background:transparent;border:1px solid rgba(92,184,232,0.2);color:rgba(92,184,232,0.55);font-size:16px;cursor:pointer;">✎</button>
+        <span style="font-family:'Space Mono',monospace;font-size:7px;color:rgba(160,210,245,0.5);letter-spacing:1px;">notes</span>
+      </div>
+      
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <button onclick="document.getElementById('transfer-panel').classList.remove('hidden')" style="width:44px;height:44px;border-radius:50%;background:transparent;border:1px solid rgba(92,184,232,0.2);color:rgba(92,184,232,0.55);font-size:14px;cursor:pointer;">⇄</button>
+        <span style="font-family:'Space Mono',monospace;font-size:7px;color:rgba(160,210,245,0.5);letter-spacing:1px;">share</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <button onclick="openFamilyFinder()" style="width:44px;height:44px;border-radius:50%;background:transparent;border:1px solid rgba(92,184,232,0.2);color:rgba(92,184,232,0.55);font-size:16px;cursor:pointer;">♡</button>
+        <span style="font-family:'Space Mono',monospace;font-size:7px;color:rgba(160,210,245,0.5);letter-spacing:1px;">family</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <button onclick="document.getElementById('music-panel').classList.remove('hidden'); renderMusicPanel()" style="width:44px;height:44px;border-radius:50%;background:transparent;border:1px solid rgba(92,184,232,0.2);color:rgba(92,184,232,0.55);font-size:16px;cursor:pointer;">♪</button>
+        <span style="font-family:'Space Mono',monospace;font-size:7px;color:rgba(160,210,245,0.5);letter-spacing:1px;">music</span>
+      </div>
+      
+    </div>
+  
+
+  <!-- NODE CREATOR -->
+  <div id="node-creator" class="panel hidden">
+    <div class="panel-title">mark this location</div>
+    <div id="node-type-grid">
+      <button class="node-type-btn" data-type="food" onclick="selectNodeType(this)">🍞<span>food</span></button>
+      <button class="node-type-btn" data-type="water" onclick="selectNodeType(this)">💧<span>water</span></button>
+      <button class="node-type-btn" data-type="medical" onclick="selectNodeType(this)">🩺<span>medical</span></button>
+      <button class="node-type-btn" data-type="shelter" onclick="selectNodeType(this)">🏠<span>shelter</span></button>
+      <button class="node-type-btn" data-type="power" onclick="selectNodeType(this)">🔋<span>power</span></button>
+      <button class="node-type-btn" data-type="rescue" onclick="selectNodeType(this)">🚨<span>rescue</span></button>
+      <button class="node-type-btn" data-type="checkpoint" onclick="selectNodeType(this)">🚧<span>checkpoint</span></button>
+      <button class="node-type-btn" data-type="danger" onclick="selectNodeType(this)">⚠️<span>danger</span></button>
+      <button class="node-type-btn" data-type="family" onclick="selectNodeType(this)">👨‍👩‍👧<span>find family</span></button>
+      <button class="node-type-btn" data-type="custom" onclick="selectNodeType(this)">✏️<span>custom</span></button>
+    </div>
+    <input type="text" id="node-name" placeholder="name this place (optional)" maxlength="40" autocomplete="off">
+    <input type="text" id="node-desc" placeholder="what do people need to know?" maxlength="100" autocomplete="off">
+    <div id="node-need-have">
+      <button class="nh-btn active" data-nh="have" onclick="selectNH(this)">I have this</button>
+      <button class="nh-btn" data-nh="need" onclick="selectNH(this)">I need this</button>
+    </div>
+    <div style="margin-bottom:24px;">
+      <div style="font-family:'Space Mono',monospace;font-size:8px;color:rgba(255,240,243,0.4);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">how long will this be here?</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="expiry-btn active" data-hours="1" onclick="selectExpiry(this)">1h</button>
+        <button class="expiry-btn" data-hours="4" onclick="selectExpiry(this)">4h</button>
+        <button class="expiry-btn" data-hours="12" onclick="selectExpiry(this)">12h</button>
+        <button class="expiry-btn" data-hours="24" onclick="selectExpiry(this)">24h</button>
+        <button class="expiry-btn" data-hours="0" onclick="selectExpiry(this)">until i remove it</button>
+      </div>
+    </div>
+    <button id="create-node-btn" onclick="createNode()" disabled>drop pin</button>
+    <button class="cancel-btn" onclick="closeNodeCreator()">cancel</button>
+  </div>
+
+  <!-- THREAT MODE overlay -->
+  <div id="threat-overlay" class="hidden"></div>
+
+</div>
+
+<!-- STATUS PANEL -->
+<div id="status-panel" class="hidden" style="position:fixed;bottom:90px;left:16px;right:16px;background:rgba(8,12,16,0.98);border:1px solid rgba(92,184,232,0.15);border-radius:16px;padding:20px;z-index:900;">
+  <div style="font-family:'Space Mono',monospace;font-size:8px;color:rgba(160,210,245,0.4);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;text-align:center;">broadcast your status</div>
+  <div style="display:flex;flex-direction:column;gap:8px;">
+    <button onclick="broadcastStatus('safe')" style="padding:13px;background:rgba(168,244,200,0.08);border:1px solid rgba(168,244,200,0.3);color:#a8f4c8;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;border-radius:8px;">✓ i am safe</button>
+    <button onclick="broadcastStatus('injured')" style="padding:13px;background:rgba(255,214,160,0.08);border:1px solid rgba(255,214,160,0.3);color:#ffd6a0;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;border-radius:8px;">⚠ i am injured</button>
+    <button onclick="broadcastStatus('help')" style="padding:13px;background:rgba(255,59,92,0.08);border:1px solid rgba(255,59,92,0.3);color:#ff3b5c;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;border-radius:8px;">🆘 i need help</button>
+  </div>
+  <button onclick="document.getElementById('status-panel').classList.add('hidden')" style="width:100%;margin-top:12px;padding:11px;background:transparent;border:1px solid rgba(255,240,243,0.1);color:rgba(255,240,243,0.3);font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;cursor:pointer;border-radius:8px;">cancel</button>
+</div>
+
+<!-- PIN SEARCH PANEL -->
+<div id="search-panel" class="panel hidden">
+  <div class="panel-title">find a pin</div>
+  <input id="pin-search-input" placeholder="search by name or type..." maxlength="40" autocomplete="off" oninput="renderPinSearch()" style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(92,184,232,0.2);padding:13px 0;color:#e8f4ff;font-family:'Space Mono',monospace;font-size:11px;outline:none;margin-bottom:16px;">
+  <div id="pin-search-results"></div>
+  <button onclick="document.getElementById('search-panel').classList.add('hidden')" style="width:100%;margin-top:12px;padding:11px;background:transparent;border:1px solid rgba(255,240,243,0.1);color:rgba(255,240,243,0.3);font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;cursor:pointer;border-radius:8px;">close</button>
+</div>
+
+<!-- CATEGORY FILTER -->
+<div id="category-filter" style="position:fixed;top:64px;left:16px;z-index:100;display:flex;flex-direction:column;gap:6px;">
+  <button onclick="toggleCategoryFilter()" id="filter-toggle-btn" style="width:36px;height:36px;border-radius:50%;background:rgba(8,12,16,0.9);border:1px solid rgba(92,184,232,0.2);color:rgba(92,184,232,0.6);font-size:14px;cursor:pointer;">⊞</button>
+  <div id="filter-buttons" class="hidden" style="display:flex;flex-direction:column;gap:4px;">
+    <button class="filter-btn active" data-type="all" onclick="selectFilter(this,'all')">all</button>
+    <button class="filter-btn" data-type="food" onclick="selectFilter(this,'food')">🍞</button>
+    <button class="filter-btn" data-type="water" onclick="selectFilter(this,'water')">💧</button>
+    <button class="filter-btn" data-type="medical" onclick="selectFilter(this,'medical')">🩺</button>
+    <button class="filter-btn" data-type="shelter" onclick="selectFilter(this,'shelter')">🏠</button>
+    <button class="filter-btn" data-type="power" onclick="selectFilter(this,'power')">🔋</button>
+    <button class="filter-btn" data-type="rescue" onclick="selectFilter(this,'rescue')">🚨</button>
+    <button class="filter-btn" data-type="checkpoint" onclick="selectFilter(this,'checkpoint')">🚧</button>
+    <button class="filter-btn" data-type="danger" onclick="selectFilter(this,'danger')">⚠️</button>
+    <button class="filter-btn" data-type="family" onclick="selectFilter(this,'family')">♡</button>
+    <button class="filter-btn" data-type="custom" onclick="selectFilter(this,'custom')">📍</button>
+  </div>
+</div>
+
+<!-- AREA NOTES PANEL -->
+<div id="notes-panel" class="panel hidden">
+  <div class="panel-title">area notes</div>
+  <div style="font-family:'Space Mono',monospace;font-size:8px;color:rgba(255,59,92,0.7);letter-spacing:1px;margin-bottom:16px;line-height:1.8;border:1px solid rgba(255,59,92,0.2);border-radius:8px;padding:12px;">
+    ⚠ warning — never write real street names, building names, or anything an outsider could use to find people. use only names locals already know.
+  </div>
+  <textarea id="note-input" placeholder="write a note locals will understand..." maxlength="200" style="width:100%;background:transparent;border:1px solid rgba(92,184,232,0.15);border-radius:8px;padding:12px;color:#e8f4ff;font-family:'Space Mono',monospace;font-size:10px;outline:none;resize:none;height:80px;margin-bottom:12px;box-sizing:border-box;"></textarea>
+  <div style="display:flex;gap:8px;margin-bottom:20px;">
+    <button class="expiry-btn active" data-hours="1" onclick="selectNoteExpiry(this)">1h</button>
+    <button class="expiry-btn" data-hours="4" onclick="selectNoteExpiry(this)">4h</button>
+    <button class="expiry-btn" data-hours="12" onclick="selectNoteExpiry(this)">12h</button>
+    <button class="expiry-btn" data-hours="0" onclick="selectNoteExpiry(this)">permanent</button>
+  </div>
+  <button onclick="postNote()" style="width:100%;padding:13px;background:rgba(92,184,232,0.08);border:1px solid rgba(92,184,232,0.3);color:rgba(92,184,232,0.8);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;border-radius:8px;margin-bottom:16px;">post note</button>
+  <div id="notes-list"></div>
+  <button onclick="document.getElementById('notes-panel').classList.add('hidden')" style="width:100%;margin-top:12px;padding:11px;background:transparent;border:1px solid rgba(255,240,243,0.1);color:rgba(255,240,243,0.3);font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;cursor:pointer;border-radius:8px;">close</button>
+</div>
+
+<!-- WIPE BUTTON (long press on logo) -->
+<div id="wipe-hint">hold ymir 3s to wipe all data</div>
+
+<script src="js/map.js"></script>
+<script src="js/mesh.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
