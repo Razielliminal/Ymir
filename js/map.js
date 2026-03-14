@@ -24,12 +24,9 @@ const MapEngine = {
     window.addEventListener('resize', () => this.resize());
 
     // ── TOUCH ──
-    this.canvas.addEventListener('touchstart', (e) => {
-  console.log('touchstart fired');
-  this.onTouchStart(e);
-}, { passive: false });
-    this.canvas.addEventListener('touchmove', (e) => this.onTouchMove(e), { passive: false });
-    this.canvas.addEventListener('touchend', (e) => this.onTouchEnd(e), { passive: false });
+this.canvas.addEventListener('touchstart', (e) => this.onTouchStart(e), { passive: true });
+this.canvas.addEventListener('touchmove', (e) => this.onTouchMove(e), { passive: false });
+this.canvas.addEventListener('touchend', (e) => this.onTouchEnd(e), { passive: false });
 
     // ── MOUSE ──
     this.canvas.addEventListener('mousedown', (e) => {
@@ -478,7 +475,6 @@ const MapEngine = {
 
   // ── TOUCH ──
   onTouchStart(e) {
-    e.preventDefault();
     this.didDrag = false;
     if (e.touches.length === 2) {
       this.dragging = false;
