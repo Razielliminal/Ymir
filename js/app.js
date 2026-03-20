@@ -229,7 +229,7 @@ function createNode() {
   const node = {
     id: generateId(),
     type: selectedType,
-    name: document.getElementById('node-name').value.trim() || typeLabel(selectedType),
+    name: document.getElementById('node-name').value.trim() || (selectedType === 'custom' ? '' : typeLabel(selectedType)),
     desc: document.getElementById('node-desc').value.trim(),
     needHave: selectedNH,
     createdBy: App.user?.id,
@@ -284,6 +284,10 @@ function stopVoice() {
 
 function deleteNode() {
   if (!App.selectedNode) return;
+  // stop navigation if we're navigating to this pin
+  if (MapEngine.navigating?.id === App.selectedNode.id) {
+    MapEngine.stopNavigation();
+  }
   App.nodes = App.nodes.filter(n => n.id !== App.selectedNode.id);
   App.saveNodes();
   Mesh.broadcast({ type: 'delete', nodeId: App.selectedNode.id });
@@ -509,7 +513,7 @@ function typeLabel(type) {
   const labels = {
     food: 'Food', water: 'Water', medical: 'Medical', shelter: 'Shelter',
     power: 'Power', rescue: 'Rescue', checkpoint: 'Checkpoint', danger: 'Danger',
-    family: 'Find Family', custom: 'Location', sos: 'SOS', place: 'Place'
+    family: 'Find Family', custom: 'unnamed place', sos: 'SOS', place: 'Place'
   };
   return labels[type] || 'Location';
 }
