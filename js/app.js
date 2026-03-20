@@ -501,7 +501,7 @@ function typeIcon(type) {
   const icons = {
     food: '🍞', water: '💧', medical: '🩺', shelter: '🏠',
     power: '🔋', rescue: '🚨', checkpoint: '🚧', danger: '⚠️',
-    family: '👨‍👩‍👧', custom: '📍', sos: '🆘'
+    family: '👨‍👩‍👧', custom: '📍', sos: '🆘', place: '•'
   };
   return icons[type] || '📍';
 }
@@ -509,7 +509,7 @@ function typeLabel(type) {
   const labels = {
     food: 'Food', water: 'Water', medical: 'Medical', shelter: 'Shelter',
     power: 'Power', rescue: 'Rescue', checkpoint: 'Checkpoint', danger: 'Danger',
-    family: 'Find Family', custom: 'Location', sos: 'SOS'
+    family: 'Find Family', custom: 'Location', sos: 'SOS', place: 'Place'
   };
   return labels[type] || 'Location';
 }
@@ -1171,6 +1171,46 @@ function deleteNote(id) {
   localStorage.setItem('dm_notes', JSON.stringify(App.notes));
   Mesh.broadcast({ type: 'delete_note', noteId: id });
   renderNotes();
+}
+
+// ── PLACE LABELER ──
+function openPlaceLabeler() {
+  const marker = document.getElementById('tap-marker');
+  if (marker) marker.remove();
+  document.getElementById('place-labeler').classList.remove('hidden');
+  setTimeout(() => document.getElementById('place-label-input').focus(), 100);
+}
+
+function createPlaceLabel() {
+  const name = document.getElementById('place-label-input').value.trim();
+  if (!name) return;
+  const node = {
+    id: generateId(),
+    type: 'place',
+    name,
+    desc: '',
+    needHave: 'have',
+    createdBy: App.user?.id,
+    createdAt: Date.now(),
+    expiresAt: null, // permanent
+    x: (MapEngine.tapX !== undefined ? MapEngine.tapX : (App.gps ? App.gps.x : 0)),
+    y: (MapEngine.tapY !== undefined ? MapEngine.tapY : (App.gps ? App.gps.y : 0)),
+    lat: MapEngine.tapLat || App.gps?.lat || null,
+    lng: MapEngine.tapLng || App.gps?.lng || null,
+    confirms: [],
+    comments: [],
+    isLabel: true
+  };
+  App.nodes.push(node);
+  App.saveNodes();
+  MapEngine.render();
+  Mesh.broadcast({ type: 'node', node });
+  document.getElementById('place-label-input').value = '';
+  document.getElementById('place-labeler').classList.add('hidden');
+  MapEngine.tapX = undefined;
+  MapEngine.tapY = undefined;
+  MapEngine.tapLat = undefined;
+  MapEngine.tapLng = undefined;
 }
 
 // ── PIN NUDGE SYSTEM ──

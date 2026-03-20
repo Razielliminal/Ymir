@@ -287,6 +287,10 @@
         <span style="font-family:'Space Mono',monospace;font-size:7px;color:rgba(160,210,245,0.5);letter-spacing:1px;">mark</span>
       </div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <button onclick="openPlaceLabeler()" style="width:44px;height:44px;border-radius:50%;background:transparent;border:1px solid rgba(92,184,232,0.2);color:rgba(92,184,232,0.55);font-size:16px;cursor:pointer;">•</button>
+        <span style="font-family:'Space Mono',monospace;font-size:7px;color:rgba(160,210,245,0.5);letter-spacing:1px;">place</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
         <button onclick="document.getElementById('notes-panel').classList.remove('hidden');renderNotes()" style="width:44px;height:44px;border-radius:50%;background:transparent;border:1px solid rgba(92,184,232,0.2);color:rgba(92,184,232,0.55);font-size:16px;cursor:pointer;">✎</button>
         <span style="font-family:'Space Mono',monospace;font-size:7px;color:rgba(160,210,245,0.5);letter-spacing:1px;">notes</span>
       </div>
@@ -349,6 +353,17 @@
   <!-- THREAT MODE overlay -->
   <div id="threat-overlay" class="hidden"></div>
 
+</div>
+
+<!-- PLACE LABELER -->
+<div id="place-labeler" class="panel hidden">
+  <div class="panel-title">name this place</div>
+  <div style="font-family:'Space Mono',monospace;font-size:8px;color:rgba(255,59,92,0.6);letter-spacing:1px;margin-bottom:20px;line-height:1.8;border:1px solid rgba(255,59,92,0.15);border-radius:8px;padding:12px;">
+    use a name only locals know.<br>never a real street name.
+  </div>
+  <input type="text" id="place-label-input" placeholder="what do locals call this place?" maxlength="40" autocomplete="off" style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(92,184,232,0.2);padding:14px 0;color:#e8f4ff;font-family:'Cormorant Garamond',serif;font-size:28px;outline:none;margin-bottom:24px;">
+  <button onclick="createPlaceLabel()" style="width:100%;padding:13px;background:rgba(92,184,232,0.08);border:1px solid rgba(92,184,232,0.3);color:rgba(92,184,232,0.9);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;border-radius:8px;margin-bottom:10px;">drop label</button>
+  <button onclick="document.getElementById('place-labeler').classList.add('hidden')" class="cancel-btn">cancel</button>
 </div>
 
 <!-- STATUS PANEL -->

@@ -208,6 +208,18 @@ this.canvas.addEventListener('touchend', (e) => this.onTouchEnd(e), { passive: f
   },
 
   drawNode(ctx, node, x, y) {
+    // place labels render as just a dot + name, no circle
+    if (node.isLabel) {
+      ctx.fillStyle = 'rgba(92,184,232,0.6)';
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.font = '10px Space Mono, monospace';
+      ctx.fillStyle = 'rgba(160,210,245,0.8)';
+      ctx.textAlign = 'center';
+      ctx.fillText(node.name.slice(0, 20), x, y - 10);
+      return;
+    }
     const isNeed = node.needHave === 'need';
     const color = this.nodeColor(node.type);
     const expiringSoon = node.expiresAt && (node.expiresAt - Date.now()) < 5 * 60 * 1000;
