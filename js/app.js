@@ -179,7 +179,8 @@ function nextSlide(n) {
 // ── NODE CREATOR ──
 let selectedType = null;
 let selectedNH = 'have';
-let selectedExpiry = 1; // hours, 0 = never
+let selectedExpiry = 1;
+let selectedQty = null; // hours, 0 = never
 
 function openNodeCreator() {
   const marker = document.getElementById('tap-marker');
@@ -196,6 +197,14 @@ function closeNodeCreator() {
   document.getElementById('node-name').value = '';
   document.getElementById('node-desc').value = '';
   document.getElementById('create-node-btn').disabled = true;
+
+  selectedQty = null;
+  document.getElementById('node-quantity-row').classList.add('hidden');
+  document.querySelectorAll('.qty-btn').forEach(b => {
+    b.style.background = 'transparent';
+    b.style.color = 'rgba(160,210,245,0.6)';
+    b.style.borderColor = 'rgba(92,184,232,0.2)';
+  });
 }
 function selectNodeType(btn) {
   document.querySelectorAll('.node-type-btn').forEach(b => b.classList.remove('selected'));
@@ -210,11 +219,32 @@ function selectNodeType(btn) {
   } else {
     nameInput.placeholder = 'name this place (optional)';
   }
+  // show quantity for resource types
+  const qtyTypes = ['food', 'water', 'medical', 'power'];
+  const qtyRow = document.getElementById('node-quantity-row');
+  if (qtyTypes.includes(btn.dataset.type)) {
+    qtyRow.classList.remove('hidden');
+  } else {
+    qtyRow.classList.add('hidden');
+    selectedQty = null;
+  }
 }
 function selectNH(btn) {
   document.querySelectorAll('.nh-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   selectedNH = btn.dataset.nh;
+}
+
+function selectQty(btn) {
+  document.querySelectorAll('.qty-btn').forEach(b => {
+    b.style.background = 'transparent';
+    b.style.color = 'rgba(160,210,245,0.6)';
+    b.style.borderColor = 'rgba(92,184,232,0.2)';
+  });
+  btn.style.background = 'rgba(92,184,232,0.12)';
+  btn.style.color = 'rgba(92,184,232,0.9)';
+  btn.style.borderColor = 'rgba(92,184,232,0.4)';
+  selectedQty = btn.dataset.qty;
 }
 
 function selectExpiry(btn) {
@@ -240,6 +270,7 @@ function createNode() {
 y: (MapEngine.tapY !== undefined ? MapEngine.tapY : (App.gps ? App.gps.y : (Math.random() - 0.5) * 400)) + (Math.random() - 0.5) * 8,
     lat: MapEngine.tapLat || App.gps?.lat || null,
     lng: MapEngine.tapLng || App.gps?.lng || null,
+    qty: selectedQty,
     confirms: [],
     comments: [],
   };
@@ -307,7 +338,8 @@ function showNodePopup(node) {
   App.selectedNode = node;
   document.getElementById('node-popup-icon').textContent = typeIcon(node.type);
   document.getElementById('node-popup-name').textContent = node.name;
-  document.getElementById('node-popup-desc').textContent = node.desc || '';
+  document.getElementById('node-popup-desc').textContent = 
+    node.qty ? `${node.qty}${node.desc ? ' — ' + node.desc : ''}` : (node.desc || '');
   document.getElementById('node-popup-distance').textContent =
     node.distanceM ? `~${Math.round(node.distanceM)}m away` : 'nearby';
 
