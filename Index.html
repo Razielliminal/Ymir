@@ -233,18 +233,21 @@
   
 </div>
 <div id="family-panel" class="panel hidden">
-      <div class="panel-title">find family</div>
-      <div style="font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,240,243,0.4);letter-spacing:1px;margin-bottom:24px;line-height:1.8;">post a name. syncs to everyone nearby.<br>expires in 2 hours.</div>
-      <input id="family-name-input" placeholder="name" style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(244,167,185,0.2);padding:13px 0;color:#fff0f3;font-family:'Cormorant Garamond',serif;font-size:22px;font-style:italic;outline:none;margin-bottom:16px;">
-      <select id="family-status-select" style="width:100%;background:#110a0d;border:1px solid rgba(244,167,185,0.2);padding:13px;color:#fff0f3;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;outline:none;margin-bottom:16px;border-radius:8px;">
-        <option value="looking">looking for them</option>
-        <option value="found">found them / I am safe</option>
-      </select>
-      <input id="family-note-input" placeholder="any details (optional)" style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(244,167,185,0.2);padding:13px 0;color:#fff0f3;font-family:'Space Mono',monospace;font-size:11px;outline:none;margin-bottom:24px;">
-      <button onclick="postFamilyEntry()" style="width:100%;padding:13px;background:rgba(244,167,185,0.08);border:1px solid rgba(244,167,185,0.3);color:#f4a7b9;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;border-radius:8px;margin-bottom:24px;">post</button>
-      <div id="family-entries"></div>
-      <button onclick="closeFamilyFinder()" style="width:100%;padding:13px;background:transparent;border:1px solid rgba(255,240,243,0.1);color:rgba(255,240,243,0.4);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:8px;margin-top:16px;">close</button>
-    </div>
+  <div class="panel-title">find someone</div>
+  <div style="font-family:'Space Mono',monospace;font-size:8px;color:rgba(255,59,92,0.6);letter-spacing:1px;margin-bottom:20px;line-height:1.8;border:1px solid rgba(255,59,92,0.15);border-radius:8px;padding:12px;">
+    never post a real name. describe something only their family would know — a nickname, what they were wearing, a habit, anything a stranger couldn't guess.
+  </div>
+  <textarea id="family-name-input" placeholder="describe them in a way only family would recognise..." style="width:100%;background:transparent;border:1px solid rgba(92,184,232,0.15);border-radius:8px;padding:12px;color:#e8f4ff;font-family:'Space Mono',monospace;font-size:11px;outline:none;resize:none;height:80px;margin-bottom:16px;box-sizing:border-box;"></textarea>
+  <select id="family-status-select" style="width:100%;background:#0c1218;border:1px solid rgba(92,184,232,0.15);padding:13px;color:#e8f4ff;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;outline:none;margin-bottom:16px;border-radius:8px;">
+    <option value="looking">looking for them</option>
+    <option value="found">found / we are safe</option>
+  </select>
+  <input id="family-note-input" placeholder="last known area — locals names only" style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(92,184,232,0.15);padding:13px 0;color:#e8f4ff;font-family:'Space Mono',monospace;font-size:11px;outline:none;margin-bottom:24px;">
+  <button onclick="postFamilyEntry()" style="width:100%;padding:13px;background:rgba(92,184,232,0.08);border:1px solid rgba(92,184,232,0.3);color:rgba(92,184,232,0.9);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;border-radius:8px;margin-bottom:24px;">post</button>
+  <div id="family-entries"></div>
+  <button onclick="closeFamilyFinder()" style="width:100%;padding:13px;background:transparent;border:1px solid rgba(255,240,243,0.1);color:rgba(255,240,243,0.4);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:8px;margin-top:16px;">close</button>
+</div>
+
 <div id="music-panel" class="panel hidden">
   <div class="panel-title">play music</div>
   <div style="font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,240,243,0.4);letter-spacing:1px;margin-bottom:24px;line-height:1.8;">
@@ -327,7 +330,6 @@
       <button class="node-type-btn" data-type="rescue" onclick="selectNodeType(this)">🚨<span>rescue</span></button>
       <button class="node-type-btn" data-type="checkpoint" onclick="selectNodeType(this)">🚧<span>checkpoint</span></button>
       <button class="node-type-btn" data-type="danger" onclick="selectNodeType(this)">⚠️<span>danger</span></button>
-      <button class="node-type-btn" data-type="family" onclick="selectNodeType(this)">👨‍👩‍👧<span>find family</span></button>
       <button class="node-type-btn" data-type="custom" onclick="selectNodeType(this)">✏️<span>custom</span></button>
     </div>
     <input type="text" id="node-name" placeholder="name this place (optional)" maxlength="40" autocomplete="off">

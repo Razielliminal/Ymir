@@ -322,6 +322,11 @@ const Mesh = {
         MapEngine.render();
         break;
 
+        case 'delete_family':
+  App.familyBoard = (App.familyBoard || []).filter(e => e.id !== packet.entryId);
+  localStorage.setItem('dm_family', JSON.stringify(App.familyBoard));
+  break;
+
       case 'note':
         App.notes = App.notes || [];
         if (packet.note && !App.notes.find(n => n.id === packet.note.id)) {

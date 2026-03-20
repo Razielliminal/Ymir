@@ -679,6 +679,13 @@ function openFamilyFinder() {
   renderFamilyBoard();
 }
 
+function deleteFamilyEntry(id) {
+  App.familyBoard = App.familyBoard.filter(e => e.id !== id);
+  localStorage.setItem('dm_family', JSON.stringify(App.familyBoard));
+  Mesh.broadcast({ type: 'delete_family', entryId: id });
+  renderFamilyBoard();
+}
+
 function closeFamilyFinder() {
   document.getElementById('family-panel').classList.add('hidden');
 }
@@ -687,7 +694,10 @@ function postFamilyEntry() {
   const name = document.getElementById('family-name-input').value.trim();
   const status = document.getElementById('family-status-select').value;
   const note = document.getElementById('family-note-input').value.trim();
-  if (!name) return;
+  if (!name) {
+    document.getElementById('family-name-input').focus();
+    return;
+  }
 
   const entry = {
     id: generateId(),
@@ -728,7 +738,10 @@ function renderFamilyBoard() {
         <span style="font-family:'Space Mono',monospace;font-size:8px;color:${e.status === 'found' ? '#a8f4c8' : '#f4a7b9'};margin-left:auto;">${e.status}</span>
       </div>
       ${e.note ? `<div style="font-size:12px;color:rgba(255,240,243,0.5);margin-bottom:6px;">${e.note}</div>` : ''}
-      <div style="font-family:'Space Mono',monospace;font-size:8px;color:rgba(255,240,243,0.25);">posted by ${e.postedBy}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+        <div style="font-family:'Space Mono',monospace;font-size:8px;color:rgba(255,240,243,0.25);">posted by ${e.posterId === App.user?.id ? 'you' : 'someone nearby'}</div>
+        ${e.posterId === App.user?.id ? `<button onclick="deleteFamilyEntry('${e.id}')" style="background:transparent;border:none;color:rgba(255,59,92,0.4);font-size:10px;cursor:pointer;">✕</button>` : ''}
+      </div>
     </div>
   `).join('');
 }
