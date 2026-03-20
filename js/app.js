@@ -115,10 +115,23 @@ userTag.onclick = () => {
 
       MapEngine.init();
       MapHint.show();
-setTimeout(() => Tour.start(), 2000);
+      setTimeout(() => Tour.start(), 2000);
       MapEngine.render();
       App.initGPS();
       App.familyBoard = JSON.parse(localStorage.getItem('dm_family') || '[]');
+
+      // request compass permission on iOS
+      if (typeof DeviceOrientationEvent !== 'undefined' &&
+          typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+          .then(response => {
+            if (response === 'granted') {
+              window.addEventListener('deviceorientation', (e) => {
+                if (e.alpha !== null) MapEngine.heading = (e.alpha * Math.PI) / 180;
+              });
+            }
+          }).catch(() => {});
+      }
     }, 600);
     PinNudge.init();
   },
@@ -169,9 +182,12 @@ let selectedNH = 'have';
 let selectedExpiry = 1; // hours, 0 = never
 
 function openNodeCreator() {
+  const marker = document.getElementById('tap-marker');
+  if (marker) marker.remove();
   document.getElementById('node-creator').classList.remove('hidden');
   document.getElementById('node-creator').classList.add('fade-in');
 }
+
 // quiet moment handled when confirmed by others
 function closeNodeCreator() {
   document.getElementById('node-creator').classList.add('hidden');
@@ -186,6 +202,14 @@ function selectNodeType(btn) {
   btn.classList.add('selected');
   selectedType = btn.dataset.type;
   document.getElementById('create-node-btn').disabled = false;
+  const nameInput = document.getElementById('node-name');
+  if (btn.dataset.type === 'custom') {
+    nameInput.value = '';
+    nameInput.placeholder = 'what do locals call this place?';
+    nameInput.focus();
+  } else {
+    nameInput.placeholder = 'name this place (optional)';
+  }
 }
 function selectNH(btn) {
   document.querySelectorAll('.nh-btn').forEach(b => b.classList.remove('active'));
@@ -321,9 +345,13 @@ function showNodePopup(node) {
   document.getElementById('node-popup-distance').textContent =
     (node.distanceM ? `~${Math.round(node.distanceM)}m away · ` : '') + `marked ${ageLabel}`;
 
-  document.getElementById('node-popup').classList.remove('hidden');
-  document.getElementById('node-popup').classList.add('fade-in');
+  // delay so the tap that opened popup doesn't bleed through to buttons inside
+  setTimeout(() => {
+    document.getElementById('node-popup').classList.remove('hidden');
+    document.getElementById('node-popup').classList.add('fade-in');
+  }, 300);
 }
+
 function closePopup() {
   document.getElementById('node-popup').classList.add('hidden');
   App.selectedNode = null;
@@ -649,7 +677,6 @@ function scanLoop(video) {
 function openFamilyFinder() {
   document.getElementById('family-panel').classList.remove('hidden');
   renderFamilyBoard();
-  onFamilyPosted();
 }
 
 function closeFamilyFinder() {
@@ -680,7 +707,9 @@ function postFamilyEntry() {
   document.getElementById('family-name-input').value = '';
   document.getElementById('family-note-input').value = '';
   renderFamilyBoard();
+  onFamilyPosted();
 }
+
 
 function renderFamilyBoard() {
   App.familyBoard = App.familyBoard || [];
