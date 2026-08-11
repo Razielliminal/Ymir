@@ -26,7 +26,7 @@ when you need to disappear, hold the logo for three seconds. everything is gone.
 - **offline mesh networking** — WebRTC peer to peer, no internet required
 - **blank map with pins** — 10 types: food, water, medical, shelter, power, rescue, checkpoint, danger, family, custom
 - **pin trust system** — community confirmation makes pins brighter
-- **genshin-style minimap navigation** — rotating compass, pulsing arrow, distance counter, auto-arrival
+- **minimap navigation** — rotating compass, pulsing arrow, distance counter, auto-arrival
 - **status broadcast** — safe / injured / need help, silent, instant
 - **SOS** — one tap distress signal to all nearby devices
 - **family finder board** — post a name, syncs to everyone nearby, expires in 2 hours
